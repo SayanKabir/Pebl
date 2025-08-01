@@ -1,0 +1,31 @@
+Hive Boxes & Data Model Structure :
+
+
+┌────────────────────┐          ┌──────────────────────┐
+│  HabitGroup (Box)  │          │     Habit (Box)      │
+└────────────────────┘          └──────────────────────┘
+        ▲                                 ▲
+        │                                 │
+        │                                 │
+┌────────────────────┐          ┌────────────────────────────┐
+│ id: String (UUID)  │          │ id: String (UUID)          │
+│ name: String       │          │ name: String               │
+│ colorValue: int    │          │ completedDates: List<Date> │
+└────────────────────┘          │ groupId: String (UUID)     │
+                                └────────────────────────────┘
+
+
+HabitGroup ──< Habit
+(MyPebls)    ──<  Wake up early
+              ──<  Drink water
+              ──<  Meditate
+
+
+
+
+
+final groups = context.watch<HabitGroupProvider>().groups;
+final habits = context.watch<HabitProvider>().habits;
+
+final selectedGroup = groups[_selectedGroupIndex];
+final groupHabits = habits.where((h) => h.groupId == selectedGroup.id).toList();
