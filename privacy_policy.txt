@@ -1,0 +1,23 @@
+Privacy Policy for Pebl
+Effective Date: 1 Aug 2025
+
+Pebl is committed to protecting your privacy. This Privacy Policy outlines how we handle information in our habit-tracking app.
+
+1. Data Collection
+Pebl does not collect, store, or share any personal information from users. All data you enter (habits, dates, streaks, etc.) is stored locally on your device and never sent to any server or third party.
+
+2. Permissions
+Pebl may request limited device permissions (e.g., local storage access for saving app data or vibration access for feedback). These are only used to improve your in-app experience and are not used to track or monitor any user behavior.
+
+3. Third-Party Services
+Pebl does not use third-party analytics, ad networks, or external APIs that collect user data.
+
+4. Data Security
+All your habit data remains on your device. If you uninstall the app, this data may be permanently deleted unless you back it up manually.
+
+5. Changes to This Policy
+We may update this privacy policy from time to time. Any changes will be reflected on this page, and the effective date will be updated.
+
+6. Contact Us
+If you have any questions or concerns about this policy, feel free to contact us at:
+📧 sayan.kabir.official@gmail.com
