@@ -25,37 +25,36 @@ class StreakBadge extends StatelessWidget {
             color: flameColor,
           ),
 
-          if(streak > 0)
-            // Bordered number inside icon
-            Positioned(
-              bottom: -4,
-              child: Stack(
-                children: [
-                  // Border
-                  Text(
-                    '$streak',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 3
-                        ..color = Colors.black,
-                    ),
+          // Always Bordered number inside icon
+          Positioned(
+            bottom: -4,
+            child: Stack(
+              children: [
+                // Border
+                Text(
+                  '$streak',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 3
+                      ..color = Colors.black,
                   ),
+                ),
 
-                  // Fill
-                  Text(
-                    '$streak',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                // Fill
+                Text(
+                  '$streak',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );

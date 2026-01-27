@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ import '../widgets/group_dialogs.dart';
 import '../widgets/habit_dialogs.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:vibration/vibration.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -96,72 +98,98 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedGroup = groups[_selectedGroupIndex];
     final groupHabits = habits.where((h) => h.groupId == selectedGroup.id).toList();
 
-    return Scaffold(
-      backgroundColor: MyConstants.mediumBlack,
-
-      // APPBAR
-      appBar: AppBar(
-        toolbarHeight: 60,
-
-        // LOGO
-        title: Container(
-          width: 100, height: 60,
-          decoration: const BoxDecoration(
-            image: DecorationImage(image: AssetImage('assets/pebl2.png'), fit: BoxFit.contain),
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF353A40), // Deep Onyx
+            Color(0xFF161719), // Midnight
+          ],
         ),
-        backgroundColor: MyConstants.mediumBlack,
-        elevation: 0,
-        actions: [
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBodyBehindAppBar: true,
 
-          // SHOW/HIDE HEATMAP BUTTON
-          IconButton(
-            icon: Icon(_showCalendar ? Icons.expand_less : Icons.expand_more, color: Colors.white),
-            onPressed: () => setState(() => _showCalendar = !_showCalendar),
-          ),
-
-          // ADD HABIT BUTTON
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              HabitDialogs.showAddHabitDialog(context, selectedGroup.id);
-            },
-          ),
-
-          // ROW OF STREAKS
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Row(
-              children: [
-                for (int i = 0; i < groups.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Builder(builder: (_) {
-                      final streak = calculateStreak(habits, groups[i].id).current;
-                      final color = streak > 0
-                          ? Color(groups[i].colorValue)
-                          : MyConstants.mutedTextColor;
-
-                      return StreakBadge(streak: streak, flameColor: color);
-                    }),
-                  ),
-              ],
+        // APPBAR
+        appBar: AppBar(
+          toolbarHeight: 80,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: ClipRRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                color: MyConstants.mediumBlack.withValues(alpha: 0.5),
+              ),
             ),
           ),
-        ],
-      ),
 
-      // BODY
-      body: CustomScrollView(
-        slivers: [
+          // LOGO
+          title: Container(
+            width: 120, height: 80,
+            decoration: const BoxDecoration(
+              image: DecorationImage(image: AssetImage('assets/pebl2.png'), fit: BoxFit.contain),
+            ),
+          ),
+          actions: [
+            // SHOW/HIDE HEATMAP BUTTON
+            IconButton(
+              icon: Icon(_showCalendar ? Icons.expand_less : Icons.expand_more, color: Colors.white),
+              onPressed: () => setState(() => _showCalendar = !_showCalendar),
+            ),
+
+            // ROW OF STREAKS
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                children: [
+                  for (int i = 0; i < groups.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Builder(builder: (_) {
+                        final streak = calculateStreak(habits, groups[i].id).current;
+                        final color = streak > 0
+                            ? Color(groups[i].colorValue)
+                            : MyConstants.mutedTextColor;
+
+                      return StreakBadge(streak: streak, flameColor: color);
+                      }),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        // BODY
+        body: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: SizedBox(height: 120)), // Use larger spacer for larger AppBar
 
           // CALENDAR HEATMAP
           if (_showCalendar)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: HeatmapSection(groups: groups, habits: habits),
-              ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: HeatmapSection(groups: groups, habits: habits),
+                    ),
+                  ),
+                ),
+              ).animate().fade(duration: 600.ms).slideY(begin: -0.1, end: 0, curve: Curves.easeOut),
             ),
 
           // DIVIDER
@@ -170,6 +198,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // LIST OF HABITS
+          if (groupHabits.isEmpty)
+             const SliverToBoxAdapter(
+               child: Padding(
+                 padding: EdgeInsets.only(top: 50.0),
+                 child: Center(
+                   child: Text(
+                     "No habits yet",
+                     style: TextStyle(color: MyConstants.mutedTextColor, fontSize: 16),
+                   ),
+                 ),
+               ),
+             ),
+
           SliverList(
             delegate: SliverChildBuilderDelegate((ctx, i) {
               final h = groupHabits[i];
@@ -180,26 +221,84 @@ class _HomeScreenState extends State<HomeScreen> {
                 isDoneToday: done,
                 onToggle: () => _onToggleHabit(h),
                 onLongPress: () => HabitDialogs.showEditHabitDialog(context, h),
-              );
+              ).animate().fade(duration: 400.ms, delay: (50 * i).ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOut);
             }, childCount: groupHabits.length),
+          ),
+
+          // ADD HABIT BUTTON (Glassmorphic)
+          SliverToBoxAdapter(
+            child: UnconstrainedBox(
+              child: GestureDetector(
+                onTap: () => HabitDialogs.showAddHabitDialog(context, selectedGroup.id),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  height: 50,
+                  width: 200, // Fixed width for smaller button
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30), // More rounded pill shape
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.08),
+                        Colors.white.withValues(alpha: 0.03),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add, color: MyConstants.textColor.withValues(alpha: 0.9), size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              "add habit",
+                              style: TextStyle(
+                                color: MyConstants.textColor.withValues(alpha: 0.9),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ).animate().shimmer(delay: 2.seconds, duration: 1.seconds, color: Colors.white24),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
-      ),
+        ),
 
-      // BOTTOM NAVBAR
-      bottomNavigationBar: PeblBottomNavbar(
-        groups: groups,
-        currentIndex: _selectedGroupIndex,
-        onGroupTap: (i) => setState(() => _selectedGroupIndex = i),
-        onGroupLongPress: (i) {
-          GroupDialogs.showEdit(context, groups[i], () {
-            setState(() => _selectedGroupIndex = 0);
-          });
-        },
-        onAddGroup: () {
-          GroupDialogs.showAdd(context, () {});
-        },
+        // BOTTOM NAVBAR
+        bottomNavigationBar: PeblBottomNavbar(
+          groups: groups,
+          currentIndex: _selectedGroupIndex,
+          onGroupTap: (i) => setState(() => _selectedGroupIndex = i),
+          onGroupLongPress: (i) {
+            GroupDialogs.showEdit(context, groups[i], () {
+              setState(() => _selectedGroupIndex = 0);
+            });
+          },
+          onAddGroup: () {
+            GroupDialogs.showAdd(context, () {});
+          },
+        ),
       ),
     );
   }

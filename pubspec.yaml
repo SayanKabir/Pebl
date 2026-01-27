@@ -31,6 +31,7 @@ dependencies:
 
   # Splash Screen
   flutter_native_splash: ^2.4.6
+  flutter_animate: ^4.5.2
 
 flutter_native_splash:
   color: "#262626"
