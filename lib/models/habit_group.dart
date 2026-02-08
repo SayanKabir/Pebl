@@ -12,5 +12,19 @@ class HabitGroup extends HiveObject {
   @HiveField(2)
   int colorValue;
 
-  HabitGroup({required this.id, required this.name, required this.colorValue});
+  /// Group reminder time - applies to all habits in this group (daily)
+  @HiveField(3)
+  DateTime? groupReminderTime;
+
+  /// Custom notification text for group reminder
+  @HiveField(4)
+  String? groupReminderText;
+
+  HabitGroup({
+    required this.id,
+    required this.name,
+    required this.colorValue,
+    this.groupReminderTime,
+    this.groupReminderText,
+  });
 }
