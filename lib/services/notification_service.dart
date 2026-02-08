@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/habit.dart';
 import '../models/habit_group.dart';
@@ -129,6 +128,9 @@ class NotificationService {
       }
     }
 
+    // Schedule daily summary notification
+    await scheduleDailySummary(habits);
+
     debugPrint('✅ All habit reminders rescheduled');
   }
 
@@ -195,6 +197,69 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────────────────────
+  // 📊 DAILY SUMMARY NOTIFICATION
+  // ─────────────────────────────────────────────────────────────
+
+  static const int _dailySummaryNotificationId = 999999;
+  static const int _dailySummaryHour = 21; // 9 PM
+  static const int _dailySummaryMinute = 0;
+
+  /// Schedule daily summary notification at 9 PM
+  Future<void> scheduleDailySummary(List<Habit> habits) async {
+    final today = DateTime.now();
+    
+    // Count completed habits today
+    final completedToday = habits.where((h) {
+      return h.completedDates.any((d) =>
+          d.year == today.year && d.month == today.month && d.day == today.day);
+    }).length;
+    
+    final totalHabits = habits.length;
+    
+    // Generate summary message
+    String title;
+    String body;
+    
+    if (totalHabits == 0) {
+      title = "No habits yet";
+      body = "Add some habits to start tracking! 🌱";
+    } else if (completedToday == totalHabits) {
+      title = "Perfect day! 🎉";
+      body = "You completed all $totalHabits habits today! Amazing!";
+    } else if (completedToday == 0) {
+      title = "Daily Summary";
+      body = "You have $totalHabits habits waiting. There's still time! ⏰";
+    } else {
+      final percent = (completedToday / totalHabits * 100).round();
+      title = "$completedToday/$totalHabits habits done";
+      if (percent >= 75) {
+        body = "Almost there! Just ${totalHabits - completedToday} more to go! 💪";
+      } else if (percent >= 50) {
+        body = "Halfway there! Keep the momentum going! 🚀";
+      } else {
+        body = "Every habit counts! You've got this! 🌟";
+      }
+    }
+    
+    await _scheduleDaily(
+      id: _dailySummaryNotificationId,
+      title: title,
+      body: body,
+      hour: _dailySummaryHour,
+      minute: _dailySummaryMinute,
+      payload: 'daily_summary',
+    );
+    
+    debugPrint('📊 Scheduled daily summary at $_dailySummaryHour:$_dailySummaryMinute');
+  }
+
+  /// Cancel daily summary notification
+  Future<void> cancelDailySummary() async {
+    await _notificationsPlugin.cancel(_dailySummaryNotificationId);
+    debugPrint('🔕 Cancelled daily summary notification');
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 🛠️ CORE SCHEDULING LOGIC
   // ─────────────────────────────────────────────────────────────
 
@@ -246,10 +311,12 @@ class NotificationService {
       body,
       scheduledDate,
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle, // Inexact for Play Store compliance
       payload: payload,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
     );
+    
+    debugPrint('📅 Scheduled notification ID=$id at $scheduledDate (hour=$hour, minute=$minute)');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -273,33 +340,8 @@ class NotificationService {
     return true;
   }
 
-  /// Check if exact alarm permission is granted (Android 12+)
-  Future<bool> hasExactAlarmPermission() async {
-    if (!Platform.isAndroid) return true;
-    return await Permission.scheduleExactAlarm.isGranted;
-  }
-
-  /// Request exact alarm permission (Android 12+)
-  Future<void> requestExactAlarmPermission() async {
-    if (!Platform.isAndroid) return;
-    if (await hasExactAlarmPermission()) return;
-
-    const intent = AndroidIntent(
-      action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
-    );
-    await intent.launch();
-  }
-
   /// Request all necessary permissions
   Future<bool> requestAllPermissions() async {
-    bool notificationGranted = await requestNotificationPermission();
-    
-    if (Platform.isAndroid) {
-      if (!await hasExactAlarmPermission()) {
-        await requestExactAlarmPermission();
-      }
-    }
-    
-    return notificationGranted;
+    return await requestNotificationPermission();
   }
 }
